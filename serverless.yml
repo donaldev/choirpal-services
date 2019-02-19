@@ -1,0 +1,55 @@
+#serverless.yml
+
+service: my-express-application
+
+custom:
+  tableName: devsettingstable
+  dbHost: dev-rds.cyep4gphbm8i.eu-west-1.rds.amazonaws.com
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: eu-west-1
+  environment:
+    USERS_TABLE: ${self:custom.tableName}
+    DB_HOST: ${self:custom.dbHost}
+
+functions:
+  # app:
+  #   handler: index.handler
+  #   events:
+  #     - http: ANY /
+  #     - http: "ANY {proxy+}"
+  createSettings:
+    handler: index.handler
+    events:
+      - http:
+          path: /settings
+          method: POST
+          authorizer:
+            name: settingsDevAuthorizer
+            arn: arn:aws:cognito-idp:eu-west-1:593557384264:userpool/eu-west-1_lBh2uaR1Z
+  readSettings:
+    handler: index.handler
+    events:
+      - http:
+          path: "/{user_id}/settings"
+          method: GET
+          authorizer:
+            name: settingsDevAuthorizer
+            arn: arn:aws:cognito-idp:eu-west-1:593557384264:userpool/eu-west-1_lBh2uaR1Z
+resources:
+  Resources:
+    DevRDSInstance:
+      Type: "AWS::RDS::DBInstance"
+      Properties:
+        DBInstanceClass: db.t2.micro
+        DBInstanceIdentifier: dev-RDS
+        Engine: postgres
+        DBName: devRDSpostgres
+        AllocatedStorage: 100
+        MasterUsername: testmaster
+        MasterUserPassword: testuser
+plugins:
+  - serverless-offline
